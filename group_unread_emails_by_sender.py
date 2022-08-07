@@ -140,7 +140,7 @@ def group_unread_emails_by_sender(mail_server, tls_port, email_address, password
                 # or else we could exceed available disk space
                 for uid in uids:
                     pause_and_print('uid', 'copy', uid, mailbox_name)
-                    pause_and_print('uid', 'store', uid, '+FLAGS', r'(\Deleted)')
+                    pause_and_print('uid', 'store', uid, '+FLAGS.SILENT', r'(\Deleted)')
                     pause_and_print('expunge')
 
     print('Done.')
@@ -171,21 +171,20 @@ if __name__ == '__main__':
 
     description = wrap_and_separate_with_newlines(
         'Moves all unread emails from your Inbox into new folders based on sender. '
-        'Creates one new folder on your mail server for each unique sender of unread emails, '
+        'Creates one new folder on your IMAP mail server for each unique sender of unread emails, '
         'moves all unread emails by that sender into that folder, and sets the folder\'s name '
-        f'as the sender\'s address. All such folders are then grouped under one parent folder, named "{MAILBOX_PREFIX[:-1]}".',
-
-        'To avoid errors, all characters in senders\' addresses that are not letters or numerals '
-        'will be replaced with underscores in folder names, unless you specify a different replacement character. '
-        'A special case are the characters "@", ".", and "-": they will be replaced with the strings "_AT_", '
-        '"_DOT_", and "_DASH_", respectively. The leading and trailing underscores in those strings are defaults '
-        'as well: they will always match the replacement character.'
+        f'as the sender\'s address. All such folders are then grouped under one parent folder, named "{MAILBOX_PREFIX[:-1]}".'
     )
     epilog = wrap_and_separate_with_newlines(
         'Your shell\'s history log may contain your email password if you type it out as an argument on the command line. '
-        f'To avoid this, you can instead read in the arguments to this script from a file using the {FROM_FILE} option. '
+        f'To avoid this, you can read in the arguments to this script from a file instead, using the {FROM_FILE} option. '
         'The arguments in this file may be listed on one line, or you may split them across multiple lines. '
         'Arguments containing spaces should be surrounded by quotes, and a literal quote can be escaped by a backslash.',
+
+        'Special cases of character replacement are the characters "@", ".", and "-": instead of the bare replacement '
+        'character, they will be replaced with the strings "_AT_", "_DOT_", and "_DASH_", respectively. But the leading '
+        'and trailing underscores in those strings are defaults: they will always match the supplied replacement '
+        'character.',
 
         'Unread emails are moved to their respective folders one at a time, instead of in groups. '
         f'So if you have a lot of unread emails, then depending on {WAIT_TIME}, this script could take a long time.'
@@ -198,12 +197,12 @@ if __name__ == '__main__':
                         type=int)
     parser.add_argument('EMAIL_ADDRESS', help='your full email address')
     parser.add_argument('PASSWORD', help='the password to your email account')
-    parser.add_argument(WAIT_TIME, help='how many seconds to wait between each command sent to the mail server '
+    parser.add_argument('-w', WAIT_TIME, help='how many seconds to wait between each command sent to the mail server '
                         f'(default: {WAIT_TIME_DEFAULT})', type=float, default=WAIT_TIME_DEFAULT)
-    parser.add_argument('--replacement-character', help='the character that replaces non-letter and non-numeral characters when '
-                        f'naming folders after email senders (default: "{REPLACEMENT_CHARACTER_DEFAULT}")',
+    parser.add_argument('-r', '--replacement-character', help='the character that replaces non-letter and non-numeral '
+                        f'characters when naming folders after email senders (default: "{REPLACEMENT_CHARACTER_DEFAULT}")',
                         default=REPLACEMENT_CHARACTER_DEFAULT)
-    parser.add_argument(FROM_FILE, help='read arguments from a file instead of from the command line. All other '
+    parser.add_argument('-f', FROM_FILE, help='read arguments from a file instead of from the command line. All other '
                         'arguments given on the command line are ignored if this option is specified')
 
     # manually check if the --from-file option was specified. If so, read arguments from the given file
